@@ -42,6 +42,10 @@ View your account status and make quick transfers to other players.
 
 Just use it. It has a technology that identifies you by your fingerprint. It doesn't matter if it gets stolen. Your bank account will be safe.
 
+### Automatic Teller Machine
+
+The same as the ElectrumPay card, but in addition it allows cash withdrawals of electrums.
+
 ## API
 
 - elez.get_money(player)

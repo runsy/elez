@@ -90,6 +90,8 @@ minetest.register_node("elez:teller_machine", {
 	drawtype = "mesh",
 	mesh = "elez_teller_machine.b3d",
 	tiles = {"elez_teller_machine.png"},
+	paramtype2 = "facedir",
+	param2 = 5,
 	physical = true,
 	groups = {crumbly=2},
 	on_rightclick = function(pos, node, player, itemstack, pointed_thing)

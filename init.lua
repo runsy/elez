@@ -74,6 +74,16 @@ minetest.register_node("elez:piggy_bank", {
 	end,
 })
 
+minetest.register_craft({
+	type = "shaped",
+	output = "elez:piggy_bank",
+	recipe = {
+		{"", coin_name, ""},
+		{"", "dye:pink", ""},
+		{"", "default:clay", ""},
+	}
+})
+
 --Helper Functions
 local function is_numeric(x)
     if tonumber(x) ~= nil then

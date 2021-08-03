@@ -1,6 +1,7 @@
 elez = {}
 local coin_name = "elez:electrum"
 local ingots_to_coins = 99
+local withdraw_max = 99
 local modname = minetest.get_current_modname()
 local S = minetest.get_translator(modname)
 
@@ -29,7 +30,7 @@ minetest.register_craftitem("elez:credit_card", {
 	wield_image = "elez_credit_card.png",
 	stack_max = 1,
 	on_use = function(itemstack, user, pointed_thing)
-		elez.electrumpay(user, "", nil)
+		elez.electrumpay(user, S("ElectrumPay Card"), "", nil, false)
 		return nil
 	end,
 })
@@ -56,7 +57,6 @@ minetest.register_node("elez:piggy_bank", {
 		"elez_piggy_bank_back.png",
 		"elez_piggy_bank_front.png"
 	},
-	paramtype = "light",
 	node_box = {
 		type = "fixed",
 		fixed = {
@@ -82,6 +82,19 @@ minetest.register_craft({
 		{"", "dye:pink", ""},
 		{"", "default:clay", ""},
 	}
+})
+
+--Automatic Teller Machine
+minetest.register_node("elez:teller_machine", {
+	description = S("Automatic Teller Machine"),
+	drawtype = "mesh",
+	mesh = "elez_teller_machine.b3d",
+	tiles = {"elez_teller_machine.png"},
+	physical = true,
+	groups = {crumbly=2},
+	on_rightclick = function(pos, node, player, itemstack, pointed_thing)
+		elez.electrumpay(player, S("Automatic Teller Machine"), "", nil, true)
+	end,
 })
 
 --Helper Functions
@@ -159,46 +172,102 @@ function elez.transfer_money(src_name,dst_name,amount)
 	return true, S("Transfer successfully completed.")
 end
 
+function elez.withdraw_money(player, amount)
+	if not amount then
+		return false, S("Error: You have to specify an amount of money.")
+	end
+	if not is_numeric(amount) then
+		return false, S("Error: The amount has to be a number.")
+	end
+	amount = math.abs(amount)
+	if amount > withdraw_max then
+		amount = withdraw_max
+	end
+	if amount > elez.get_money(player) then
+		return false, S("Error: You has not").." "..tostring(amount).." "..S("of money to withdraw.")
+	end
+	local inv = player:get_inventory()
+	local money_stack = ItemStack(coin_name.." "..tostring(amount))
+	if not inv:room_for_item("main", money_stack) then
+		return false, S("No space in your inventory for the money.")
+	else
+		inv:add_item("main", money_stack)
+		elez.add_money(player, -amount)
+		return true, S("Money successfully withdrawn.")
+	end
+end
+
 --ElectrumPay
 
-local function compose_formspec(user, msg, default_fields)
+local _contexts = {}
+
+local function get_context(name)
+    local context = _contexts[name] or {}
+    _contexts[name] = context
+    return context
+end
+
+minetest.register_on_leaveplayer(function(player)
+    _contexts[player:get_player_name()] = nil
+end)
+
+local function compose_formspec(user, title, msg, default_fields, withdraw)
 	local formspec = [[
 		formspec_version[4]
-		size[5,5]
-		label[1.25,0.25;]]..S("ElectrumPay Card")..[[]
+		size[6,5]
+		label[2.25,0.25;]]..title..[[]
 		label[0.25,0.75;]]..S("Account Balance")..": "..
 			tostring(elez.get_money(user)).." ê"..[[]
 		field[0.25,1.25;2,1;fld_name;]]..S("Name")..[[:;]]..default_fields["name"]..[[]
 		field_close_on_enter[fld_name;false]
-		field[2.25,1.25;2,1;fld_amount;]]..S("Amount")..[[:;]]..default_fields["amount"]..[[]
+		field[2.25,1.25;1,1;fld_amount;]]..S("Amount")..[[:;]]..default_fields["amount"]..[[]
 		field_close_on_enter[fld_amount;false]
-		button_exit[2,2.25;1,1;btn_transfer;]]..S("Transfer")..[[]
+		button_exit[1.75,2.25;1,1;btn_transfer;]]..S("Transfer")..[[]
 		label[0.25,3.5;]]..msg..[[]
-		button_exit[2,3.75;1,1;btn_close;]]..S("Close")..[[]
+		button_exit[2.5,3.75;1,1;btn_close;]]..S("Close")..[[]
 	]]
+	if withdraw then
+		formspec = formspec..
+			"field[3.75,1.25;1,1;fld_withdraw;"..S("Amount")..":;"..default_fields["withdraw"].."]"..
+			"field_close_on_enter[fld_withdraw;false]"..
+			"button_exit[3.75,2.25;2,1;btn_withdraw;"..S("Withdraw").." "..tostring(withdraw_max)
+				.." "..S("max").."]"
+	end
 	return formspec
 end
 
-function elez.electrumpay(user, msg, default_fields)
+function elez.electrumpay(user, title, msg, default_fields, withdraw)
 	if not default_fields then
-		default_fields = {name="",amount=""}
+		default_fields = {name="",amount="",withdraw=""}
 	end
-    minetest.show_formspec(user:get_player_name(), "elez.electrumpay", compose_formspec(user, msg, default_fields))
+	local user_name = user:get_player_name()
+	if withdraw then
+		local context = get_context(user_name)
+		context.withdraw = true
+	end
+    minetest.show_formspec(user_name, "elez:electrumpay", compose_formspec(user, title, msg, default_fields, withdraw))
+end
+
+local function default_fields(fields, success)
+	if success then
+		return {name="",amount="",withdraw=""}
+	else
+		return {name=fields.fld_name,amount=fields.fld_amount,withdraw=fields.fld_withdraw}
+	end
 end
 
 minetest.register_on_player_receive_fields(function(player, formname, fields)
-    if formname ~= "elez.electrumpay" then
+    if formname ~= "elez:electrumpay" then
         return
     end
+    local player_name = player:get_player_name()
+    local context = get_context(player_name)
     if fields.btn_transfer then
-		local transfer, msg = elez.transfer_money(player:get_player_name(),fields.fld_name,fields.fld_amount)
-		local default_fields
-		if transfer then
-			default_fields = {name="",amount=""}
-		else
-			default_fields = {name=fields.fld_name,amount=fields.fld_amount}
-		end
-		elez.electrumpay(player, msg, default_fields)
+		local transfer, msg = elez.transfer_money(player_name, fields.fld_name, fields.fld_amount)
+		elez.electrumpay(player, msg, default_fields(fields, transfer), context.withdraw)
+	elseif fields.btn_withdraw then
+		local withdraw, msg = elez.withdraw_money(player, fields.fld_withdraw)
+		elez.electrumpay(player, msg, default_fields(fields, withdraw), context.withdraw)
     end
 end)
 
@@ -224,7 +293,7 @@ minetest.register_chatcommand("add_money", {
 		if not player then
 			return true, S("Error: The player does not exist or not online.")
 		end
-		elez.add_money(player, amount)
+		elez.add_money(player, tonumber(amount))
 		minetest.chat_send_player(name, S("You've added").." "..tostring(amount).." "
 			..S("of money to").." "..player_name)
     end,

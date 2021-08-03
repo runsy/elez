@@ -55,7 +55,7 @@ Just use it. It has a technology that identifies you by your fingerprint. It doe
 
 ## Dependencies
 
-- default, moreores, basic_materials
+- default, moreores, basic_materials, dye
 
 ## Download
 

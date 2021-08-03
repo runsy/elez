@@ -4,7 +4,7 @@ ElectrumZ is a mod for Minetest of monetary economics.
 
 The official currency is the "Electrum", which is an alloy of gold, silver and copper in different proportions. The electrum symbol is: ê.
 
-1 crafting = 100 electrums.
+1 crafting = 99 electrums.
 
 ## Commands
 

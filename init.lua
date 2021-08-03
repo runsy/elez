@@ -161,6 +161,8 @@ function elez.transfer_money(src_name,dst_name,amount)
 	amount = math.abs(amount)
 	if amount > 32767 then
 		amount = 32767
+	elseif amount == 0 then
+		return false, S("Error: Type an amount greater than 0.")
 	end
 	local src = minetest.get_player_by_name(src_name)
 	local dst = minetest.get_player_by_name(dst_name)
@@ -195,6 +197,9 @@ function elez.withdraw_money(player, amount)
 	end
 	if amount > elez.get_money(player) then
 		return false, S("Error: You has not").." "..tostring(amount).." "..S("of money to withdraw.")
+	end
+	if amount == 0 then
+		return false, S("Error: Type an amount greater than 0.")
 	end
 	local inv = player:get_inventory()
 	local money_stack = ItemStack(coin_name.." "..tostring(amount))

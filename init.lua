@@ -30,7 +30,7 @@ minetest.register_craftitem("elez:credit_card", {
 	wield_image = "elez_credit_card.png",
 	stack_max = 1,
 	on_use = function(itemstack, user, pointed_thing)
-		elez.electrumpay(user, S("ElectrumPay Card"), "", nil, false)
+		elez.electrumpay(user, "", nil, false)
 		return nil
 	end,
 })
@@ -93,7 +93,7 @@ minetest.register_node("elez:teller_machine", {
 	physical = true,
 	groups = {crumbly=2},
 	on_rightclick = function(pos, node, player, itemstack, pointed_thing)
-		elez.electrumpay(player, S("Automatic Teller Machine"), "", nil, true)
+		elez.electrumpay(player, "", nil, true)
 	end,
 })
 
@@ -254,11 +254,16 @@ local function get_default_fields(fields, success)
 	end
 end
 
-function elez.electrumpay(user, title, msg, default_fields, withdraw)
+function elez.electrumpay(user, msg, default_fields, withdraw)
 	local user_name = user:get_player_name()
+	local context = get_context(user_name)
+	local title
 	if withdraw then
-		local context = get_context(user_name)
 		context.withdraw = true
+		title = S("Automatic Teller Machine")
+	else
+		context.withdraw = false
+		title = S("ElectrumPay Card")
 	end
 	if not default_fields then
 		default_fields = {name="",amount="",withdraw=""}
@@ -272,17 +277,12 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
     end
     local player_name = player:get_player_name()
     local context = get_context(player_name)
-    if context.withdraw then
-		title = S("ElectrumPay Card")
-	else
-		title = S("Automatic Teller Machine")
-	end
     if fields.btn_transfer then
 		local transfer, msg = elez.transfer_money(player_name, fields.fld_name, fields.fld_amount)
-		elez.electrumpay(player, title, msg, get_default_fields(fields, transfer), context.withdraw)
+		elez.electrumpay(player, msg, get_default_fields(fields, transfer), context.withdraw)
 	elseif fields.btn_withdraw then
 		local withdraw, msg = elez.withdraw_money(player, fields.fld_withdraw)
-		elez.electrumpay(player, title, msg, get_default_fields(fields, withdraw), context.withdraw)
+		elez.electrumpay(player, msg, get_default_fields(fields, withdraw), context.withdraw)
     end
 end)
 

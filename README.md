@@ -2,7 +2,7 @@
 
 Electrum is a mod for Minetest of monetary economics.
 
-The official currency is the "Electrum", which is an alloy of gold, silver and copper in different proportions.
+The official currency is the "Electrum", which is an alloy of gold, silver and copper in different proportions. The electrum symbol is: ê.
 
 ## Commands
 
@@ -31,6 +31,7 @@ Gives money to another player.
 
 Create this cute piggy bank to store your electrums without command.
 Right-click on it to save them.
+Note that the electrums will be deposited in your bank account, not physically inside the piggy bank. No matter if the piggy is stolen or broken, your money will be safe.
 
 ### ElectrumPay Card
 
@@ -56,5 +57,5 @@ Just use it. It has a technology that identifies you by your fingerprint. It doe
 
 ## Download
 
-https://github.com/runsy/elez/archive/refs/heads/master.zip
+https://github.com/runsy/elez/archive/refs/heads/main.zip
 

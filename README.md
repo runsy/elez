@@ -33,6 +33,7 @@ Gives money to another player.
 
 Create this cute piggy bank to store your electrums without command.
 Right-click on it to save them.
+Note that ALL electrums in your inventory will be saved, not just the ones you wield.
 Note that the electrums will be deposited in your bank account, not physically inside the piggy bank. No matter if the piggy is stolen or broken, your money will be safe.
 
 ### ElectrumPay Card

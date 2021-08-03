@@ -246,24 +246,24 @@ local function compose_formspec(user, title, msg, default_fields, withdraw)
 	return formspec
 end
 
-function elez.electrumpay(user, title, msg, default_fields, withdraw)
-	if not default_fields then
-		default_fields = {name="",amount="",withdraw=""}
-	end
-	local user_name = user:get_player_name()
-	if withdraw then
-		local context = get_context(user_name)
-		context.withdraw = true
-	end
-    minetest.show_formspec(user_name, "elez:electrumpay", compose_formspec(user, title, msg, default_fields, withdraw))
-end
-
-local function default_fields(fields, success)
+local function get_default_fields(fields, success)
 	if success then
 		return {name="",amount="",withdraw=""}
 	else
 		return {name=fields.fld_name,amount=fields.fld_amount,withdraw=fields.fld_withdraw}
 	end
+end
+
+function elez.electrumpay(user, title, msg, default_fields, withdraw)
+	local user_name = user:get_player_name()
+	if withdraw then
+		local context = get_context(user_name)
+		context.withdraw = true
+	end
+	if not default_fields then
+		default_fields = {name="",amount="",withdraw=""}
+	end
+    minetest.show_formspec(user_name, "elez:electrumpay", compose_formspec(user, title, msg, default_fields, withdraw))
 end
 
 minetest.register_on_player_receive_fields(function(player, formname, fields)
@@ -272,12 +272,17 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
     end
     local player_name = player:get_player_name()
     local context = get_context(player_name)
+    if context.withdraw then
+		title = S("ElectrumPay Card")
+	else
+		title = S("Automatic Teller Machine")
+	end
     if fields.btn_transfer then
 		local transfer, msg = elez.transfer_money(player_name, fields.fld_name, fields.fld_amount)
-		elez.electrumpay(player, msg, default_fields(fields, transfer), context.withdraw)
+		elez.electrumpay(player, title, msg, get_default_fields(fields, transfer), context.withdraw)
 	elseif fields.btn_withdraw then
 		local withdraw, msg = elez.withdraw_money(player, fields.fld_withdraw)
-		elez.electrumpay(player, msg, default_fields(fields, withdraw), context.withdraw)
+		elez.electrumpay(player, title, msg, get_default_fields(fields, withdraw), context.withdraw)
     end
 end)
 

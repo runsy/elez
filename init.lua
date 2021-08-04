@@ -60,12 +60,12 @@ minetest.register_node("elez:piggy_bank", {
 	node_box = {
 		type = "fixed",
 		fixed = {
-			{-0.25, -0.375, -0.25, 0.25, -0.0625, 0.25}, -- NodeBox1
-			{-0.1875, -0.5, -0.1875, -0.125, -0.375, -0.125}, -- NodeBox2
-			{0.125, -0.5, -0.1875, 0.1875, -0.375, -0.125}, -- NodeBox3
-			{0.125, -0.5, 0.125, 0.1875, -0.375, 0.1875}, -- NodeBox4
-			{-0.1875, -0.5, 0.125, -0.125, -0.375, 0.1875}, -- NodeBox5
-			{-0.125, -0.3125, -0.3125, 0.125, -0.1875, -0.25}, -- NodeBox6
+			{-0.25, -0.375, -0.25, 0.25, -0.0625, 0.25},
+			{-0.1875, -0.5, -0.1875, -0.125, -0.375, -0.125},
+			{0.125, -0.5, -0.1875, 0.1875, -0.375, -0.125},
+			{0.125, -0.5, 0.125, 0.1875, -0.375, 0.1875},
+			{-0.1875, -0.5, 0.125, -0.125, -0.375, 0.1875},
+			{-0.125, -0.3125, -0.3125, 0.125, -0.1875, -0.25},
 		}
 	},
 	groups = {crumbly=2},
@@ -93,7 +93,7 @@ minetest.register_node("elez:teller_machine", {
 	paramtype2 = "facedir",
 	param2 = 5,
 	physical = true,
-	groups = {crumbly=2},
+	groups = {cracky = 3},
 	on_rightclick = function(pos, node, player, itemstack, pointed_thing)
 		elez.electrumpay(player, "", nil, true)
 	end,
@@ -118,6 +118,19 @@ local function is_numeric(x)
 end
 
 --Basic Money functions
+
+local function check_amount(amount)
+	if not amount then
+		return false, S("Error: You have to specify an amount of money.")
+	end
+	if not is_numeric(amount) then
+		return false, S("Error: The amount has to be numeric.")
+	end
+	if amount == 0 then
+		return false, S("Error: Type an amount greater than 0.")
+	end
+	return true
+end
 
 function elez.add_money(player, amount)
 	if amount < -32768 then
@@ -154,17 +167,13 @@ function elez.save_money(player)
 end
 
 function elez.transfer_money(src_name,dst_name,amount)
-	if not amount then
-		return false, S("Error: You have to specify an amount of money.")
-	end
-	if not is_numeric(amount) then
-		return false, S("Error: The amount has to be a number.")
+	local ok, msg = check_amount(amount)
+	if not ok then
+		return ok, msg
 	end
 	amount = math.abs(amount)
 	if amount > 32767 then
 		amount = 32767
-	elseif amount == 0 then
-		return false, S("Error: Type an amount greater than 0.")
 	end
 	local src = minetest.get_player_by_name(src_name)
 	local dst = minetest.get_player_by_name(dst_name)
@@ -187,11 +196,9 @@ function elez.transfer_money(src_name,dst_name,amount)
 end
 
 function elez.withdraw_money(player, amount)
-	if not amount then
-		return false, S("Error: You have to specify an amount of money.")
-	end
-	if not is_numeric(amount) then
-		return false, S("Error: The amount has to be a number.")
+	local ok, msg = check_amount(amount)
+	if not ok then
+		return ok, msg
 	end
 	amount = math.abs(amount)
 	if amount > withdraw_max then
@@ -199,9 +206,6 @@ function elez.withdraw_money(player, amount)
 	end
 	if amount > elez.get_money(player) then
 		return false, S("Error: You has not").." "..tostring(amount).." "..S("of money to withdraw.")
-	end
-	if amount == 0 then
-		return false, S("Error: Type an amount greater than 0.")
 	end
 	local inv = player:get_inventory()
 	local money_stack = ItemStack(coin_name.." "..tostring(amount))
@@ -255,9 +259,9 @@ end
 
 local function get_default_fields(fields, success)
 	if success then
-		return {name="",amount="",withdraw=""}
+		return {name="", amount="", withdraw=""}
 	else
-		return {name=fields.fld_name,amount=fields.fld_amount,withdraw=fields.fld_withdraw}
+		return {name=fields.fld_name, amount=fields.fld_amount, withdraw=fields.fld_withdraw}
 	end
 end
 
@@ -273,7 +277,7 @@ function elez.electrumpay(user, msg, default_fields, withdraw)
 		title = S("ElectrumPay Card")
 	end
 	if not default_fields then
-		default_fields = {name="",amount="",withdraw=""}
+		default_fields = {name = "", amount = "", withdraw = ""}
 	end
     minetest.show_formspec(user_name, "elez:electrumpay", compose_formspec(user, title, msg, default_fields, withdraw))
 end
@@ -305,11 +309,9 @@ minetest.register_chatcommand("add_money", {
 			return true, S("Error: You have to specify a player and an amount of money.")
 		end
 		local player_name, amount = string.match(param, "([%a%d_-]+) ([%a%d_-]+)")
-		if not amount then
-			return true, S("Error: You have to specify an amount of money.")
-		end
-		if not is_numeric(amount) then
-			return true, S("Error: The amount has to be a number.")
+		local ok, msg = check_amount(amount)
+		if not ok then
+			return true, msg
 		end
 		local player = minetest.get_player_by_name(player_name)
 		if not player then

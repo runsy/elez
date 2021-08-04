@@ -68,7 +68,8 @@ minetest.register_node("elez:piggy_bank", {
 			{-0.125, -0.3125, -0.3125, 0.125, -0.1875, -0.25},
 		}
 	},
-	groups = {crumbly=2},
+	groups = {crumbly = 2},
+	sounds = default.node_sound_glass_defaults(),
 	on_rightclick = function(pos, node, player, itemstack, pointed_thing)
 		elez.save_money(player)
 	end,
@@ -94,6 +95,7 @@ minetest.register_node("elez:teller_machine", {
 	param2 = 5,
 	physical = true,
 	groups = {cracky = 3},
+	sounds = default.node_sound_metal_defaults(),
 	on_rightclick = function(pos, node, player, itemstack, pointed_thing)
 		elez.electrumpay(player, "", nil, true)
 	end,

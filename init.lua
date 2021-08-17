@@ -1,12 +1,13 @@
 elez = {}
-local coin_name = "elez:electrum"
+elez.coin_name = "elez:electrum"
+elez.coin_symbol = "ê"
 local ingots_to_coins = 99
 local withdraw_max = 99
 local modname = minetest.get_current_modname()
 local S = minetest.get_translator(modname)
 
 --Electrum
-minetest.register_craftitem(coin_name, {
+minetest.register_craftitem(elez.coin_name, {
 	description = S("Electrum"),
 	inventory_image = "elez_electrum.png",
 	wield_image = "elez_electrum.png",
@@ -15,7 +16,7 @@ minetest.register_craftitem(coin_name, {
 
 minetest.register_craft({
 	type = "shaped",
-	output = coin_name.." "..tostring(ingots_to_coins),
+	output = elez.coin_name.." "..tostring(ingots_to_coins),
 	recipe = {
 		{"", "moreores:silver_ingot", ""},
 		{"moreores:silver_ingot", "default:gold_ingot", "moreores:silver_ingot"},
@@ -79,7 +80,7 @@ minetest.register_craft({
 	type = "shaped",
 	output = "elez:piggy_bank",
 	recipe = {
-		{"", coin_name, ""},
+		{"", elez.coin_name, ""},
 		{"", "dye:pink", ""},
 		{"", "default:clay", ""},
 	}
@@ -151,14 +152,14 @@ function elez.save_money(player)
 	local inv = player:get_inventory()
 	local inv_list = inv:get_list("main")
 	local player_name = player:get_player_name()
-	if not inv:contains_item("main", coin_name) then
+	if not inv:contains_item("main", elez.coin_name) then
 		minetest.chat_send_player(player_name, S("You have no electrums in your inventory."))
 		return false
 	end
 	local amount = 0
 	for i = 1, #inv_list do
 		local item_stack = inv_list[i]
-		if item_stack:get_name() == coin_name then
+		if item_stack:get_name() == elez.coin_name then
 			amount = amount + item_stack:get_count()
 			inv:set_stack("main", i, ItemStack(nil))
 		end
@@ -210,7 +211,7 @@ function elez.withdraw_money(player, amount)
 		return false, S("Error: You has not").." "..tostring(amount).." "..S("of money to withdraw.")
 	end
 	local inv = player:get_inventory()
-	local money_stack = ItemStack(coin_name.." "..tostring(amount))
+	local money_stack = ItemStack(elez.coin_name.." "..tostring(amount))
 	if not inv:room_for_item("main", money_stack) then
 		return false, S("No space in your inventory for the money.")
 	else
@@ -240,7 +241,7 @@ local function compose_formspec(user, title, msg, default_fields, withdraw)
 		size[6,5]
 		label[2.25,0.25;]]..title..[[]
 		label[0.25,0.75;]]..S("Account Balance")..": "..
-			tostring(elez.get_money(user)).." ê"..[[]
+			tostring(elez.get_money(user)).." "..elez.coin_symbol..[[]
 		field[0.25,1.25;2,1;fld_name;]]..S("Name")..[[:;]]..default_fields["name"]..[[]
 		field_close_on_enter[fld_name;false]
 		field[2.25,1.25;1,1;fld_amount;]]..S("Amount")..[[:;]]..default_fields["amount"]..[[]
